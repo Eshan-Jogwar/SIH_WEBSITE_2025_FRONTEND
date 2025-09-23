@@ -191,6 +191,34 @@ export const postsApi = {
       throw new Error("Failed to test URL");
     }
   },
+  refreshToken: async (): Promise<string | null> => {
+    // 1. Get the refresh token from storage
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    if (!refreshToken) {
+      console.error("No refresh token found.");
+      return null;
+    }
+
+    try {
+      // 2. Make the POST request to the /refresh endpoint
+      const response = await api.post<{ access: string }>("/refresh", {
+        refresh: refreshToken,
+      });
+
+      const newAccessToken = response.data.access;
+
+      // 3. Save the new access token
+      localStorage.setItem("accessToken", newAccessToken);
+
+      console.log("Access token refreshed successfully.");
+      return newAccessToken;
+    } catch (error) {
+      console.error("Failed to refresh token:", error);
+      // This usually means the refresh token is also expired, so you should log the user out.
+      return null;
+    }
+  },
 };
 
 // Expose utility for UI components
