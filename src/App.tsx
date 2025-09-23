@@ -5,6 +5,7 @@ import { LoginPage } from "./components/LoginPage";
 import { SignupPage } from "./components/SignupPage";
 import { User } from "./types";
 import { postsApi } from "./api/postsApi";
+import { UserProvider } from "./context/UserContext";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -66,9 +67,11 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <Dashboard user={user} onLogout={handleLogout} />
-    </div>
+    <UserProvider user={user} setUser={setUser}>
+      <div className="App">
+        <Dashboard onLogout={handleLogout} />
+      </div>
+    </UserProvider>
   );
 }
 

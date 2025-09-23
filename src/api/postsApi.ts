@@ -60,7 +60,6 @@ export const postsApi = {
     }
   },
 
-  // Fetch single post by ID
   getPostById: async (id: string): Promise<Post | null> => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
@@ -73,40 +72,6 @@ export const postsApi = {
     } catch (error) {
       console.error("Error fetching post:", error);
       throw new Error("Failed to fetch post");
-    }
-  },
-
-  // Analyze post for AI detection
-  analyzePost: async (postId: string): Promise<any> => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // In production:
-      // const response = await api.post('/analyze', { postId });
-      // return response.data;
-
-      const post = dummyPosts.find((p) => p.id === postId);
-      return post?.detectionDetails || null;
-    } catch (error) {
-      console.error("Error analyzing post:", error);
-      throw new Error("Failed to analyze post");
-    }
-  },
-
-  // Get spread analysis
-  getSpreadAnalysis: async (postId: string): Promise<any> => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // In production:
-      // const response = await api.get(`/posts/${postId}/spread`);
-      // return response.data;
-
-      const post = dummyPosts.find((p) => p.id === postId);
-      return post?.spreadAnalysis || null;
-    } catch (error) {
-      console.error("Error fetching spread analysis:", error);
-      throw new Error("Failed to fetch spread analysis");
     }
   },
 
@@ -132,6 +97,7 @@ export const postsApi = {
       // For now, returning a dummy user is fine for UI continuity.
       if (response.data.access != null) {
         dummyUser.name = credentials.username;
+        (dummyUser as any).username = credentials.username;
       }
       return {
         user: dummyUser, // Replace with a real user fetch when the endpoint is ready

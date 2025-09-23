@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
-import type { Post, User } from "../types";
+import type { Post } from "../types";
 import { PostCard } from "./PostCard";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { ProfileModal } from "./ProfileModal";
 import { postsApi } from "../api/postsApi";
 import { Shield, ExternalLink } from "lucide-react";
 import { PostDetailModal } from "./PostDetailModel";
+import { useUser } from "../context/UserContext";
 
 interface DashboardProps {
-  user: User;
   onLogout: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
+  const { user } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -103,7 +104,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               <span className="text-sm text-gray-500">Placeholder data</span>
 
               <ProfileDropdown
-                user={user}
                 onLogout={onLogout}
                 onViewProfile={() => setIsProfileModalOpen(true)}
               />
@@ -196,7 +196,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
       {/* Profile Modal */}
       <ProfileModal
-        user={user}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
       />

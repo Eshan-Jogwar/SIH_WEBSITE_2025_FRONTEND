@@ -1,18 +1,17 @@
 import React from "react";
 import { X, User, Mail, Calendar, BarChart3, Target } from "lucide-react";
-import type { User as UserType } from "../types";
+import { useUser } from "../context/UserContext";
 
 interface ProfileModalProps {
-  user: UserType | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
-  user,
   isOpen,
   onClose,
 }) => {
+  const { user } = useUser();
   if (!isOpen || !user) return null;
 
   const formatDate = (dateString: string) => {

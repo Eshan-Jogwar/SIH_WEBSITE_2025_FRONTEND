@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { User, LogOut, ChevronDown } from "lucide-react";
-import { User as UserType } from "../types";
+import { useUser } from "../context/UserContext";
 
 interface ProfileDropdownProps {
-  user: UserType;
   onLogout: () => void;
   onViewProfile: () => void;
 }
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
-  user,
   onLogout,
   onViewProfile,
 }) => {
+  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +42,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     }
     return display.slice(0, 2).toUpperCase();
   };
+
+  if (!user) return null;
 
   return (
     <div className="relative" ref={dropdownRef}>
