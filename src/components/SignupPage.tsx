@@ -14,6 +14,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
     email: "",
     password1: "",
     password2: "",
+    recaptcha_token: "abc",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");

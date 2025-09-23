@@ -24,12 +24,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     });
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+  const getInitials = (display: string) => {
+    if (display.includes(" ")) {
+      return display
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase();
+    }
+    return display.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -49,9 +52,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           {/* Profile Header */}
           <div className="text-center">
             <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-              {getInitials(user.name)}
+              {getInitials(user.username || user.name)}
             </div>
-            <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
+            <h3 className="text-xl font-semibold text-gray-900">
+              @{user.username}
+            </h3>
             <p className="text-gray-600">{user.email}</p>
           </div>
 
@@ -79,8 +84,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <div className="flex items-center space-x-3">
               <User className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Full Name</p>
-                <p className="text-sm text-gray-600">{user.name}</p>
+                <p className="text-sm font-medium text-gray-900">Username</p>
+                <p className="text-sm text-gray-600">@{user.username}</p>
               </div>
             </div>
 

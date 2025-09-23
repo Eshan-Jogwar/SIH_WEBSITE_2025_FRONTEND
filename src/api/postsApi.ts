@@ -25,44 +25,16 @@ try {
   if (savedAccess) setAuthHeader(savedAccess);
 } catch {}
 
-// Attempt to get reCAPTCHA v3 token; returns "test" if not configured
-async function getRecaptchaToken(action: string): Promise<string> {
-  const siteKey = (import.meta as any).env?.VITE_RECAPTCHA_SITE_KEY;
-  // Wait for grecaptcha to load
-  const waitForGrecaptcha = () =>
-    new Promise<void>((resolve) => {
-      if (typeof window !== "undefined" && (window as any).grecaptcha)
-        return resolve();
-      const interval = setInterval(() => {
-        if ((window as any).grecaptcha) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 50);
-      setTimeout(() => {
-        clearInterval(interval);
-        resolve();
-      }, 3000);
-    });
-
-  await waitForGrecaptcha();
-
-  if (typeof window !== "undefined" && (window as any).grecaptcha && siteKey) {
-    try {
-      const grecaptcha = (window as any).grecaptcha;
-      await grecaptcha.ready?.();
-      const token = await grecaptcha.execute(siteKey, { action });
-      if (typeof token === "string" && token.length > 0) return token;
-    } catch {}
-  }
-  // Fallback token for local testing; backend may allow this when configured
-  return "test";
+// No-op reCAPTCHA for simplified flow
+async function getRecaptchaToken(_: string): Promise<string> {
+  return "";
 }
 
 // Dummy user data
 const dummyUser: User = {
   id: "1",
   name: "John Doe",
+  username: "johndoe",
   email: "john.doe@example.com",
   joinDate: "2024-01-15",
   postsAnalyzed: 1247,
@@ -140,32 +112,37 @@ export const postsApi = {
 
   // Authentication functions
   login: async (
-    credentials: LoginCredentials
+    credentials: LoginCredentials & { recaptcha_token: string }
   ): Promise<{ user: User; token: string }> => {
     try {
-      const recaptcha_token = await getRecaptchaToken("login");
-      const payload = {
-        username: credentials.email,
-        password: credentials.password,
-        recaptcha_token,
-      };
-      const response = await api.post("/login", payload);
+      // The credentials object now directly matches the backend payload
+      const response = await api.post("/login", credentials);
+
       const { access, refresh } = response.data as {
         access: string;
         refresh: string;
       };
-      // Persist tokens and set header
+
+      // Persist tokens and set header for future API calls
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
       setAuthHeader(access);
 
-      // Backend has no profile endpoint yet; return dummy user for UI continuity
+      // In a real app, you would fetch the user profile from a /users/me endpoint.
+      // For now, returning a dummy user is fine for UI continuity.
+      if (response.data.access != null) {
+        dummyUser.name = credentials.username;
+      }
       return {
-        user: dummyUser,
+        user: dummyUser, // Replace with a real user fetch when the endpoint is ready
         token: access,
       };
     } catch (error) {
       console.error("Error logging in:", error);
+      // Reset tokens on failure
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      setAuthHeader("");
       throw new Error("Failed to login");
     }
   },
@@ -177,16 +154,32 @@ export const postsApi = {
     email: string;
     password1: string;
     password2: string;
+    recaptcha_token: string;
   }): Promise<{ message: string }> => {
     try {
-      const recaptcha_token = await getRecaptchaToken("signup");
-      const payload = { ...data, recaptcha_token };
-      const response = await api.post("/signup", payload);
+      const response = await api.post("/signup", data);
       return response.data as { message: string };
     } catch (error: any) {
-      // Surface backend error if available
-      const message = error?.response?.data?.error || "Failed to signup";
-      throw new Error(message);
+      // Attempt to parse and throw a more specific error from the backend
+      const errorData = error.response?.data;
+      if (errorData) {
+        // Handle cases where backend sends structured errors (e.g., {"username": ["already exists"]})
+        if (typeof errorData === "object") {
+          const messages = Object.entries(errorData)
+            .map(([key, value]) => `${key}: ${(value as string[]).join(", ")}`)
+            .join("; ");
+          throw new Error(
+            messages || "Signup failed. Please check your input."
+          );
+        }
+        // Handle simple error messages
+        throw new Error(
+          errorData.error ||
+            errorData.detail ||
+            "An unknown error occurred during signup."
+        );
+      }
+      throw new Error("Failed to connect to the server.");
     }
   },
 

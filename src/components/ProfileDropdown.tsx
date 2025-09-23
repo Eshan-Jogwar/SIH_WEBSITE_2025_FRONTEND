@@ -32,12 +32,16 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     };
   }, []);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+  const getInitials = (display: string) => {
+    // Prefer initials from spaces in name; fallback to first two letters of username-like strings
+    if (display.includes(" ")) {
+      return display
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase();
+    }
+    return display.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -47,10 +51,10 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
         className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
       >
         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-          {getInitials(user.name)}
+          {getInitials(user.username || user.name)}
         </div>
         <span className="text-sm font-medium text-gray-700 hidden sm:block">
-          {user.name}
+          {user.username}
         </span>
         <ChevronDown
           className={`w-4 h-4 text-gray-500 transition-transform ${
@@ -62,7 +66,9 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
           <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
+            <p className="text-sm font-medium text-gray-900">
+              @{user.username}
+            </p>
             <p className="text-xs text-gray-500">{user.email}</p>
           </div>
 

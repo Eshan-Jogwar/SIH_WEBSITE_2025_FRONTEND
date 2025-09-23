@@ -42,6 +42,7 @@ export interface GraphEdge {
 export interface User {
   id: string;
   name: string;
+  username: string;
   email: string;
   avatar?: string;
   joinDate: string;
@@ -50,6 +51,7 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
+  recaptcha_token?: string;
 }
