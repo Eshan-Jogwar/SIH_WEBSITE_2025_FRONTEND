@@ -2,12 +2,14 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Dashboard } from "./components/Dashboard";
 import { LoginPage } from "./components/LoginPage";
+import { SignupPage } from "./components/SignupPage";
 import { User } from "./types";
 import { postsApi } from "./api/postsApi";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in (in a real app, check for stored token)
@@ -31,7 +33,8 @@ function App() {
 
   const handleLogin = (userData: User) => {
     setUser(userData);
-    localStorage.setItem("authToken", "dummy-token");
+    // token will be set by postsApi.login; keep a marker for legacy
+    localStorage.setItem("authToken", "present");
   };
 
   const handleLogout = () => {
@@ -51,7 +54,15 @@ function App() {
   }
 
   if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
+    if (showSignup) {
+      return <SignupPage onSwitchToLogin={() => setShowSignup(false)} />;
+    }
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onSwitchToSignup={() => setShowSignup(true)}
+      />
+    );
   }
 
   return (

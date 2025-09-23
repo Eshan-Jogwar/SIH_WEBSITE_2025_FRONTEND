@@ -3,6 +3,62 @@ import type { Post, User, LoginCredentials } from "../types";
 
 import { dummyPosts } from "../data/dummyData";
 
+// Axios instance with base URL from env or default
+const api = axios.create({
+  baseURL:
+    (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8000/api",
+  withCredentials: false,
+});
+
+// Manage Authorization header
+function setAuthHeader(token?: string) {
+  if (token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common["Authorization"];
+  }
+}
+
+// Initialize header from localStorage if present
+try {
+  const savedAccess = localStorage.getItem("accessToken");
+  if (savedAccess) setAuthHeader(savedAccess);
+} catch {}
+
+// Attempt to get reCAPTCHA v3 token; returns "test" if not configured
+async function getRecaptchaToken(action: string): Promise<string> {
+  const siteKey = (import.meta as any).env?.VITE_RECAPTCHA_SITE_KEY;
+  // Wait for grecaptcha to load
+  const waitForGrecaptcha = () =>
+    new Promise<void>((resolve) => {
+      if (typeof window !== "undefined" && (window as any).grecaptcha)
+        return resolve();
+      const interval = setInterval(() => {
+        if ((window as any).grecaptcha) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve();
+      }, 3000);
+    });
+
+  await waitForGrecaptcha();
+
+  if (typeof window !== "undefined" && (window as any).grecaptcha && siteKey) {
+    try {
+      const grecaptcha = (window as any).grecaptcha;
+      await grecaptcha.ready?.();
+      const token = await grecaptcha.execute(siteKey, { action });
+      if (typeof token === "string" && token.length > 0) return token;
+    } catch {}
+  }
+  // Fallback token for local testing; backend may allow this when configured
+  return "test";
+}
+
 // Dummy user data
 const dummyUser: User = {
   id: "1",
@@ -12,15 +68,6 @@ const dummyUser: User = {
   postsAnalyzed: 1247,
   accuracyRate: 94.2,
 };
-
-// Base API configuration
-const api = axios.create({
-  baseURL: process.env.VITE_REACT_APP_API_URL || "https://api.example.com",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 
 // API Functions (currently returning dummy data)
 export const postsApi = {
@@ -96,24 +143,60 @@ export const postsApi = {
     credentials: LoginCredentials
   ): Promise<{ user: User; token: string }> => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const recaptcha_token = await getRecaptchaToken("login");
+      const payload = {
+        username: credentials.email,
+        password: credentials.password,
+        recaptcha_token,
+      };
+      const response = await api.post("/login", payload);
+      const { access, refresh } = response.data as {
+        access: string;
+        refresh: string;
+      };
+      // Persist tokens and set header
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+      setAuthHeader(access);
 
-      // In production:
-      // const response = await api.post('/auth/login', credentials);
-      // return response.data;
-
-      // Simple dummy validation
-      if (credentials.email && credentials.password) {
-        return {
-          user: dummyUser,
-          token: "dummy-jwt-token-12345",
-        };
-      } else {
-        throw new Error("Invalid credentials");
-      }
+      // Backend has no profile endpoint yet; return dummy user for UI continuity
+      return {
+        user: dummyUser,
+        token: access,
+      };
     } catch (error) {
       console.error("Error logging in:", error);
       throw new Error("Failed to login");
+    }
+  },
+
+  signup: async (data: {
+    username: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    password1: string;
+    password2: string;
+  }): Promise<{ message: string }> => {
+    try {
+      const recaptcha_token = await getRecaptchaToken("signup");
+      const payload = { ...data, recaptcha_token };
+      const response = await api.post("/signup", payload);
+      return response.data as { message: string };
+    } catch (error: any) {
+      // Surface backend error if available
+      const message = error?.response?.data?.error || "Failed to signup";
+      throw new Error(message);
+    }
+  },
+
+  logout: async (): Promise<void> => {
+    try {
+      await api.get("/logout");
+    } finally {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      setAuthHeader(undefined);
     }
   },
 
@@ -150,3 +233,6 @@ export const postsApi = {
     }
   },
 };
+
+// Expose utility for UI components
+export const authUtils = { getRecaptchaToken };

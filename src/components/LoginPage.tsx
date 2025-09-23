@@ -5,9 +5,13 @@ import { User } from "../types";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
+  onSwitchToSignup?: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({
+  onLogin,
+  onSwitchToSignup,
+}) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -135,6 +139,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <p className="text-xs text-gray-500">
               Demo credentials: Any email and password will work
             </p>
+            <button
+              type="button"
+              onClick={onSwitchToSignup}
+              className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+            >
+              Create an account
+            </button>
           </div>
         </form>
       </div>
