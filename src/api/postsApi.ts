@@ -6,7 +6,8 @@ import { dummyPosts } from "../data/dummyData";
 // Axios instance with base URL from env or default
 const api = axios.create({
   baseURL:
-    (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8000/api",
+    (import.meta as any).env?.VITE_API_BASE_URL ||
+    "https://sih-django-777268942678.asia-south2.run.app/api/",
   withCredentials: false,
 });
 
@@ -46,18 +47,34 @@ export const postsApi = {
   // Fetch all posts
   getAllPosts: async (): Promise<Post[]> => {
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Make a GET request to the API endpoint
+      const response = await axios.get<any[]>(
+        "https://jsonplaceholder.typicode.com/posts"
+      );
 
-      // In production, this would be:
-      // const response = await api.get('/posts');
-      // return response.data;
+      const newPosts: Post[] = [];
+
+      for (let i = 0; i < response.data.length; i++) {
+        newPosts.push({
+          ...dummyPosts[i],
+          id: response.data[i].id,
+          content: response.data[i].title,
+        });
+      }
 
       return dummyPosts;
     } catch (error) {
       console.error("Error fetching posts:", error);
+      // Re-throw the error to be handled by the caller
       throw new Error("Failed to fetch posts");
     }
+  },
+
+  verifyEmail: async (path: string) => {
+    console.log(`Sending GET request to: ${path}`);
+
+    // Make the GET request and return the promise
+    return api.get(path);
   },
 
   getPostById: async (id: string): Promise<Post | null> => {
@@ -80,7 +97,6 @@ export const postsApi = {
     credentials: LoginCredentials & { recaptcha_token: string }
   ): Promise<{ user: User; token: string }> => {
     try {
-      // The credentials object now directly matches the backend payload
       const response = await api.post("/login", credentials);
 
       const { access, refresh } = response.data as {
@@ -100,7 +116,7 @@ export const postsApi = {
         (dummyUser as any).username = credentials.username;
       }
       return {
-        user: dummyUser, // Replace with a real user fetch when the endpoint is ready
+        user: dummyUser,
         token: access,
       };
     } catch (error) {
@@ -123,7 +139,9 @@ export const postsApi = {
     recaptcha_token: string;
   }): Promise<{ message: string }> => {
     try {
+      console.log({ data });
       const response = await api.post("/signup", data);
+      console.log({ response });
       return response.data as { message: string };
     } catch (error: any) {
       // Attempt to parse and throw a more specific error from the backend

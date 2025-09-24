@@ -6,6 +6,9 @@ import { SignupPage } from "./components/SignupPage";
 import { User } from "./types";
 import { postsApi } from "./api/postsApi";
 import { UserProvider } from "./context/UserContext";
+import { AuthContainer } from "./components/AuthContainer";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+import { VerifyEmailPage } from "./components/VerifyEmailPage";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -43,6 +46,20 @@ function App() {
     localStorage.removeItem("authToken");
   };
 
+  const path = window.location.pathname;
+  if (path.startsWith("/verify-email/")) {
+    const parts = path.split("/"); // -> ["", "verify-email", "MQ", "some-token"]
+
+    // Check if uid and token parts exist (array length will be 4)
+    if (parts.length === 4) {
+      const uid = parts[2];
+      const token = parts[3];
+
+      // Render the component and pass the extracted values as props
+      return <VerifyEmailPage path={path} />;
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -56,13 +73,19 @@ function App() {
 
   if (!user) {
     if (showSignup) {
-      return <SignupPage onSwitchToLogin={() => setShowSignup(false)} />;
+      return (
+        <GoogleReCaptchaProvider reCaptchaKey="6LfbuNIrAAAAAJ57PMe53LMChP1PYvjnwSYqFTgL">
+          <SignupPage onSwitchToLogin={() => setShowSignup(false)} />
+        </GoogleReCaptchaProvider>
+      );
     }
     return (
-      <LoginPage
-        onLogin={handleLogin}
-        onSwitchToSignup={() => setShowSignup(true)}
-      />
+      <GoogleReCaptchaProvider reCaptchaKey="6LfbuNIrAAAAAJ57PMe53LMChP1PYvjnwSYqFTgL">
+        <LoginPage
+          onLogin={handleLogin}
+          onSwitchToSignup={() => setShowSignup(true)}
+        />
+      </GoogleReCaptchaProvider>
     );
   }
 

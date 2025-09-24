@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { postsApi } from "../api/postsApi";
 import { User } from "../types";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -17,12 +18,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const obj = useGoogleReCaptcha();
   // Create a useCallback for the submit handler
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-
+      const token = await obj.executeRecaptcha!("login_action");
       setLoading(true);
       setError("");
 
@@ -30,7 +31,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         await postsApi.login({
           username: username,
           password,
-          recaptcha_token: "sfd",
+          recaptcha_token: token,
         });
 
         const user = await postsApi.getCurrentUser();

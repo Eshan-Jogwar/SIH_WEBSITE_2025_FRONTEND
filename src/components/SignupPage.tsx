@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Shield, Mail, Lock, User as UserIcon } from "lucide-react";
 import { postsApi } from "../api/postsApi";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 interface SignupPageProps {
   onSwitchToLogin: () => void;
@@ -14,12 +15,12 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
     email: "",
     password1: "",
     password2: "",
-    recaptcha_token: "abc",
+    recaptcha_token: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-
+  const obj = useGoogleReCaptcha();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -31,7 +32,9 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
     setError("");
     setSuccess("");
     try {
-      const res = await postsApi.signup(form);
+      const token = await obj.executeRecaptcha!("signup");
+      console.log({ token });
+      const res = await postsApi.signup({ ...form, recaptcha_token: token });
       setSuccess(res.message || "Signed up successfully. Check your email.");
     } catch (err: any) {
       setError(err?.message || "Failed to signup");
