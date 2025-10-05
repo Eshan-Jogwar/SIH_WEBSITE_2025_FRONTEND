@@ -66,23 +66,23 @@ function App() {
     );
   }
 
-  if (!user) {
-    if (showSignup) {
-      return (
-        <GoogleReCaptchaProvider reCaptchaKey="6LfbuNIrAAAAAJ57PMe53LMChP1PYvjnwSYqFTgL">
-          <SignupPage onSwitchToLogin={() => setShowSignup(false)} />
-        </GoogleReCaptchaProvider>
-      );
-    }
-    return (
-      <GoogleReCaptchaProvider reCaptchaKey="6LfbuNIrAAAAAJ57PMe53LMChP1PYvjnwSYqFTgL">
-        <LoginPage
-          onLogin={handleLogin}
-          onSwitchToSignup={() => setShowSignup(true)}
-        />
-      </GoogleReCaptchaProvider>
-    );
-  }
+  // if (!user) {
+  //   if (showSignup) {
+  //     return (
+  //       <GoogleReCaptchaProvider reCaptchaKey="6LfbuNIrAAAAAJ57PMe53LMChP1PYvjnwSYqFTgL">
+  //         <SignupPage onSwitchToLogin={() => setShowSignup(false)} />
+  //       </GoogleReCaptchaProvider>
+  //     );
+  //   }
+  //   return (
+  //     <GoogleReCaptchaProvider reCaptchaKey="6LfbuNIrAAAAAJ57PMe53LMChP1PYvjnwSYqFTgL">
+  //       <LoginPage
+  //         onLogin={handleLogin}
+  //         onSwitchToSignup={() => setShowSignup(true)}
+  //       />
+  //     </GoogleReCaptchaProvider>
+  //   );
+  // }
 
   return (
     <UserProvider user={user} setUser={setUser}>
